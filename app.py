@@ -17,23 +17,38 @@ st.markdown("""
     .main { background-color: #fffaf0; }
     h1 { color: #d2691e; text-align: center; }
     .stButton>button { 
-        width: 100%; height: 3em; font-size: 1.5rem !important; 
+        width: 100%; height: 3em; font-size: 1.2rem !important; 
         background-color: #ff8c00; color: white; border-radius: 15px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("✉️ いろどりレター")
-st.write("今日の食事をパシャリと撮るだけで、AIがお返事を出します。")
+st.write("今日の食事をパシャリと撮るか、写真を選んでください。")
 
-img_file = st.camera_input("カメラでごはんを撮る")
+# --- 写真の入力方法を選択 ---
+tab1, tab2 = st.tabs(["📸 その場で撮影", "📁 写真から選ぶ"])
 
+img_file = None
+
+with tab1:
+    img_file_cam = st.camera_input("カメラを起動（自撮りになったら切り替えボタンを押してね）")
+    if img_file_cam:
+        img_file = img_file_cam
+
+with tab2:
+    img_file_up = st.file_uploader("スマホの写真フォルダから選ぶ", type=['jpg', 'jpeg', 'png'])
+    if img_file_up:
+        img_file = img_file_up
+
+# --- 判定処理 ---
 if img_file is not None:
     image = Image.open(img_file)
     st.image(image, caption='今日のごはん', use_container_width=True)
     
     with st.spinner('AIが内容を確認しています...'):
         try:
+            # モデル名の指定を修正しました
             model = genai.GenerativeModel('gemini-1.5-flash')
             prompt = """
             あなたは優しくて写真に詳しい食生活アドバイザーです。
@@ -53,3 +68,4 @@ if img_file is not None:
             
         except Exception as e:
             st.error(f"エラーが発生しました: {e}")
+            st.info("APIキーが正しいか、Google AI Studioの設定を再度確認してみてください。")
